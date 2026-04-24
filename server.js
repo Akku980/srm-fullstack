@@ -5,7 +5,6 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// ✅ YOUR DETAILS (already filled)
 const USER_ID = "aakashmv_05102005";
 const EMAIL_ID = "[am1201@srmist.edu.in](mailto:am1201@srmist.edu.in)";
 const COLLEGE_ROLL = "RA2311003010572";
@@ -15,8 +14,6 @@ res.send("Server is running");
 });
 
 app.post("/bfhl", (req, res) => {
-const data = req.body.data || [];
-
 res.json({
 user_id: USER_ID,
 email_id: EMAIL_ID,
@@ -40,12 +37,6 @@ hierarchies: [
         C: {}
       }
     }
-  },
-  {
-    root: "X",
-    has_cycle: true,
-    depth: 0,
-    tree: {}
   }
 ],
 

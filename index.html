@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SRM Tree Visualizer</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Syne:wght@700;800&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131a;
+    --border: #2a2a3a;
+    --accent: #7c5cfc;
+    --accent2: #fc5c7d;
+    --green: #56f3a0;
+    --yellow: #f3e056;
+    --text: #e8e8f0;
+    --muted: #6b6b80;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    min-height: 100vh;
+    padding: 2rem 1rem;
+  }
+
+  .header {
+    text-align: center;
+    margin-bottom: 2.5rem;
+  }
+
+  .header h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(1.8rem, 5vw, 3rem);
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: -1px;
+  }
+
+  .header p {
+    color: var(--muted);
+    font-size: 0.85rem;
+    margin-top: 0.4rem;
+  }
+
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .card label {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 0.75rem;
+  }
+
+  textarea {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.9rem;
+    padding: 1rem;
+    resize: vertical;
+    min-height: 130px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  textarea:focus { border-color: var(--accent); }
+
+  .hint {
+    font-size: 0.75rem;
+    color: var(--muted);
+    margin-top: 0.6rem;
+  }
+
+  .api-row {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    margin-top: 0.75rem;
+  }
+
+  .api-row input {
+    flex: 1;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    padding: 0.65rem 1rem;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .api-row input:focus { border-color: var(--accent); }
+
+  .btn {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    font-family: 'Syne', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 700;
+    padding: 0.75rem 2rem;
+    cursor: pointer;
+    width: 100%;
+    margin-top: 1rem;
+    letter-spacing: 0.5px;
+    transition: opacity 0.2s, transform 0.1s;
+  }
+
+  .btn:hover { opacity: 0.9; }
+  .btn:active { transform: scale(0.98); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .error-box {
+    background: rgba(252,92,125,0.1);
+    border: 1px solid var(--accent2);
+    border-radius: 8px;
+    color: var(--accent2);
+    padding: 1rem;
+    font-size: 0.85rem;
+    display: none;
+  }
+
+  .result-section { display: none; }
+
+  .section-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .identity-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 0.75rem;
+  }
+
+  .id-item {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+  }
+
+  .id-item .key {
+    font-size: 0.65rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 0.3rem;
+  }
+
+  .id-item .val {
+    font-size: 0.9rem;
+    color: var(--green);
+    word-break: break-all;
+  }
+
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .sum-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1rem;
+    text-align: center;
+  }
+
+  .sum-card .num {
+    font-family: 'Syne', sans-serif;
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--accent);
+  }
+
+  .sum-card .label {
+    font-size: 0.65rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 0.25rem;
+  }
+
+  .tree-cards { display: flex; flex-direction: column; gap: 1rem; }
+
+  .tree-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .tree-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid var(--border);
+    background: rgba(124,92,252,0.05);
+  }
+
+  .tree-root-label {
+    font-family: 'Syne', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .badge {
+    font-size: 0.7rem;
+    padding: 0.2rem 0.6rem;
+    border-radius: 20px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .badge-cycle {
+    background: rgba(252,92,125,0.15);
+    color: var(--accent2);
+    border: 1px solid var(--accent2);
+  }
+
+  .badge-depth {
+    background: rgba(86,243,160,0.1);
+    color: var(--green);
+    border: 1px solid var(--green);
+  }
+
+  .tree-body { padding: 1rem; }
+
+  .tree-visual {
+    font-size: 0.85rem;
+    line-height: 1.8;
+    color: var(--text);
+  }
+
+  .tag-row { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+
+  .tag {
+    background: rgba(124,92,252,0.1);
+    border: 1px solid rgba(124,92,252,0.3);
+    border-radius: 6px;
+    color: var(--accent);
+    font-size: 0.8rem;
+    padding: 0.25rem 0.6rem;
+  }
+
+  .tag-bad {
+    background: rgba(252,92,125,0.1);
+    border-color: rgba(252,92,125,0.3);
+    color: var(--accent2);
+  }
+
+  .divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 1.2rem 0;
+  }
+
+  .spinner {
+    display: inline-block;
+    width: 16px; height: 16px;
+    border: 2px solid rgba(255,255,255,0.2);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    vertical-align: middle;
+    margin-right: 8px;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  @media (max-width: 500px) {
+    .summary-grid { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>⬡ SRM Tree Visualizer</h1>
+    <p>Full Stack Engineering Challenge — BFHL API</p>
+  </div>
+
+  <div class="card">
+    <label>🔗 API Base URL</label>
+    <div class="api-row">
+      <input type="text" id="apiUrl" placeholder="https://your-api.onrender.com" />
+    </div>
+  </div>
+
+  <div class="card">
+    <label>📥 Node Input (comma or newline separated)</label>
+    <textarea id="nodeInput" placeholder='A->B, A->C, B->D, X->Y, Y->Z, Z->X, hello, 1->2'></textarea>
+    <p class="hint">Example: A->B, A->C, B->D, C->E — each edge as Parent->Child</p>
+  </div>
+
+  <div class="error-box" id="errorBox"></div>
+  <button class="btn" id="submitBtn" onclick="submit()">▶ Submit to API</button>
+
+  <div class="result-section" id="resultSection">
+    <div class="card">
+      <div class="section-title">👤 Identity</div>
+      <div class="identity-grid" id="identityGrid"></div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">📊 Summary</div>
+      <div class="summary-grid" id="summaryGrid"></div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">🌲 Hierarchies</div>
+      <div class="tree-cards" id="treeCards"></div>
+    </div>
+
+    <div class="card" id="extraCard">
+      <div class="section-title">⚠️ Invalid &amp; Duplicates</div>
+      <div id="extraContent"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+function renderTree(node, obj, prefix = "", isLast = true) {
+  let lines = "";
+  const connector = isLast ? "└── " : "├── ";
+  const extension = isLast ? "    " : "│   ";
+  lines += `<span class="tree-node">${prefix}${connector}<b style="color:#7c5cfc">${node}</b></span>\n`;
+  const keys = Object.keys(obj);
+  keys.forEach((child, i) => {
+    lines += renderTree(child, obj[child], prefix + extension, i === keys.length - 1);
+  });
+  return lines;
+}
+
+async function submit() {
+  const btn = document.getElementById("submitBtn");
+  const errBox = document.getElementById("errorBox");
+  const resultSection = document.getElementById("resultSection");
+
+  errBox.style.display = "none";
+  resultSection.style.display = "none";
+
+  const apiUrl = document.getElementById("apiUrl").value.trim().replace(/\/$/, "");
+  const raw = document.getElementById("nodeInput").value.trim();
+
+  if (!apiUrl) { showError("Please enter your API URL!"); return; }
+  if (!raw) { showError("Please enter some node data!"); return; }
+
+  const data = raw.split(/[\n,]+/).map(s => s.trim()).filter(Boolean);
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Calling API...';
+
+  try {
+    const res = await fetch(`${apiUrl}/bfhl`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ data })
+    });
+
+    if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+    const json = await res.json();
+    renderResult(json);
+  } catch (e) {
+    showError("API call failed: " + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = "▶ Submit to API";
+  }
+}
+
+function showError(msg) {
+  const box = document.getElementById("errorBox");
+  box.textContent = "❌ " + msg;
+  box.style.display = "block";
+}
+
+function renderResult(r) {
+  document.getElementById("identityGrid").innerHTML = [
+    ["user_id", r.user_id],
+    ["email_id", r.email_id],
+    ["college_roll_number", r.college_roll_number]
+  ].map(([k,v]) => `<div class="id-item"><div class="key">${k}</div><div class="val">${v}</div></div>`).join("");
+
+  document.getElementById("summaryGrid").innerHTML = `
+    <div class="sum-card"><div class="num">${r.summary.total_trees}</div><div class="label">Trees</div></div>
+    <div class="sum-card"><div class="num">${r.summary.total_cycles}</div><div class="label">Cycles</div></div>
+    <div class="sum-card"><div class="num">${r.summary.largest_tree_root || "—"}</div><div class="label">Deepest Root</div></div>
+  `;
+
+  const tc = document.getElementById("treeCards");
+  tc.innerHTML = r.hierarchies.map(h => {
+    const badge = h.has_cycle
+      ? `<span class="badge badge-cycle">⟳ Cycle</span>`
+      : `<span class="badge badge-depth">Depth ${h.depth}</span>`;
+
+    let body = "";
+    if (h.has_cycle) {
+      body = `<p style="color:var(--accent2);font-size:0.85rem">⚠ Cyclic group — no tree structure available.</p>`;
+    } else {
+      const rootKey = Object.keys(h.tree)[0];
+      body = `<pre class="tree-visual"><span class="tree-node"><b style="color:#f3e056">${rootKey}</b></span>\n`;
+      const children = h.tree[rootKey];
+      const keys = Object.keys(children);
+      keys.forEach((child, i) => {
+        body += renderTree(child, children[child], "", i === keys.length - 1);
+      });
+      body += `</pre>`;
+    }
+
+    return `<div class="tree-card">
+      <div class="tree-card-header"><span class="tree-root-label">Root: ${h.root}</span>${badge}</div>
+      <div class="tree-body">${body}</div>
+    </div>`;
+  }).join("");
+
+  const extra = document.getElementById("extraContent");
+  let html = "";
+  if (r.invalid_entries.length > 0) {
+    html += `<p style="font-size:0.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:0.5rem">Invalid Entries</p>`;
+    html += `<div class="tag-row">${r.invalid_entries.map(e => `<span class="tag tag-bad">${e}</span>`).join("")}</div>`;
+  }
+  if (r.duplicate_edges.length > 0) {
+    if (html) html += '<hr class="divider"/>';
+    html += `<p style="font-size:0.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:0.5rem">Duplicate Edges</p>`;
+    html += `<div class="tag-row">${r.duplicate_edges.map(e => `<span class="tag">${e}</span>`).join("")}</div>`;
+  }
+  if (!html) html = `<p style="color:var(--muted);font-size:0.85rem">No invalid entries or duplicates 🎉</p>`;
+  extra.innerHTML = html;
+
+  document.getElementById("resultSection").style.display = "block";
+  document.getElementById("resultSection").scrollIntoView({ behavior: "smooth" });
+}
+</script>
+</body>
+</html>
